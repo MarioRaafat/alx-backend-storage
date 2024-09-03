@@ -1,2 +1,2 @@
 // use db my_db
-use db my_db;
+use my_db;
