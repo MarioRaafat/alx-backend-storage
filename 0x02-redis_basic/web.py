@@ -32,5 +32,4 @@ def cache_with_expiration(func: Callable) -> Callable:
 @cache_with_expiration
 def get_page(url: str) -> str:
     response = requests.get(url)
-    print(response)
     return response.text
