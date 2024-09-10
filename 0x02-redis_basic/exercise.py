@@ -2,7 +2,21 @@
 
 import uuid
 import redis
+from functools import wraps
 from typing import Any, Callable, Union
+
+def count_calls(method: Callable) -> Callable:
+    '''Counts the number of times a method is called.
+    '''
+    @wraps(method)
+    def invoker(self, *args, **kwargs):
+        '''Invokes the method.
+        '''
+        if isinstance(self._redis, redis.Redis):
+            key = method.__qualname__
+            self._redis.incr(key)
+        return method(self, *args, **kwargs)
+    return invoker
 
 class Cache:
     """
@@ -20,7 +34,8 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
-    def store(self, data: str) -> str:
+    @count_calls
+    def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         Stores the given data in Redis and returns a unique key.
 
@@ -41,3 +56,13 @@ class Cache:
         '''
         data = self._redis.get(key)
         return fn(data) if fn is not None else data
+
+    def get_str(self, key: str) -> str:
+        '''Retrieves a string value from a Redis data storage.
+        '''
+        return self.get(key, lambda x: x.decode('utf-8'))
+
+    def get_int(self, key: str) -> int:
+        '''Retrieves an integer value from a Redis data storage.
+        '''
+        return self.get(key, lambda x: int(x))
