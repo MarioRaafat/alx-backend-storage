@@ -2,6 +2,7 @@
 
 import uuid
 import redis
+from typing import Any, Callable, Union
 
 class Cache:
     """
@@ -32,3 +33,11 @@ class Cache:
         key = str(uuid.uuid4())
         self._redis.set(key, data)
         return key
+
+    def get(
+            self, key: str,
+            fn: Callable = None) -> Union[str, bytes, int, float]:
+        '''Retrieves a value from a Redis data storage.
+        '''
+        data = self._redis.get(key)
+        return fn(data) if fn is not None else data
