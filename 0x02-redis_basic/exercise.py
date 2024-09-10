@@ -41,24 +41,37 @@ def replay(fn: Callable) -> None:
     '''
     if fn is None or not hasattr(fn, '__self__'):
         return
+
+    # Get the Redis instance from the Cache class
     redis_store = getattr(fn.__self__, '_redis', None)
     if not isinstance(redis_store, redis.Redis):
         return
+    
+    # Get the qualified name of the function
     fxn_name = fn.__qualname__
     in_key = '{}:inputs'.format(fxn_name)
     out_key = '{}:outputs'.format(fxn_name)
+    
+    # Retrieve the number of calls from Redis
     fxn_call_count = 0
     if redis_store.exists(fxn_name) != 0:
         fxn_call_count = int(redis_store.get(fxn_name))
+    
+    # Print the number of times the function was called
     print('{} was called {} times:'.format(fxn_name, fxn_call_count))
+    
+    # Retrieve inputs and outputs from Redis
     fxn_inputs = redis_store.lrange(in_key, 0, -1)
     fxn_outputs = redis_store.lrange(out_key, 0, -1)
+    
+    # Print each input and output pair
     for fxn_input, fxn_output in zip(fxn_inputs, fxn_outputs):
         print('{}(*{}) -> {}'.format(
             fxn_name,
             fxn_input.decode("utf-8"),
-            fxn_output,
+            fxn_output.decode("utf-8"),
         ))
+
 
 class Cache:
     """
